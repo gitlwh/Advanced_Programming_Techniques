@@ -1,9 +1,10 @@
+package miniServer;
+
 /* CSE 264 - Fall 2014
  * Homework #1 - Mini HTTP Server
  * Name:Weiheng Li
  * Date:Sep 27 2017
  */
-package edu.lehigh.cse264;
 
 import java.io.*;
 import java.net.*;
@@ -11,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 public class Main {
     // The port can be any small integer that isn't being used by another program
@@ -28,7 +30,11 @@ public class Main {
                 // that will be used to communicate with the client.
                 Socket newSocket = s.accept();
                 System.out.println("New connection from: " + ((InetSocketAddress)newSocket.getRemoteSocketAddress()).getAddress().getHostAddress());
-                
+                String str = ((InetSocketAddress)newSocket.getRemoteSocketAddress()).getAddress().getHostAddress();
+                BufferedWriter writer = new BufferedWriter(new FileWriter("access.log",true));
+                writer.write(str+" - ");
+                 
+                writer.close();
                 // Create a new handler object to handle the requests of the 
                 // client that just connected.
                 ClientHandler handler = new ClientHandler(newSocket);
@@ -77,12 +83,16 @@ class ClientHandler implements Runnable {
                     
                     // Dump the entire request to the console for debugging
                     dumpRequest(firstLine, headers);
-                    
+                    BufferedWriter writer = new BufferedWriter(new FileWriter("access.log",true));
+                    writer.write("\""+firstLine+"\" ");
+                     
+                    writer.close();
                     // Process the request based on the method used (GET is the only
                     // one we're implementing for now
                     int responseCode = 0;
                     switch (method) {
                         case "GET":
+                        	//System.out.println("get1");
                             responseCode = processGET(resource, headers, response);
                             break;
                         case "POST":
@@ -111,6 +121,10 @@ class ClientHandler implements Runnable {
             } catch (Exception e) {
                // If we get an i/o error, tell the user that the resource is unavailable
                response.writeBytes("HTTP/1.1 404 ERROR\n\n");
+               BufferedWriter writer = new BufferedWriter(new FileWriter("access.log",true));
+               writer.write("404\n");
+                
+               writer.close();
             }
             // Clean up once the request has been processed
             request.close();
@@ -122,6 +136,7 @@ class ClientHandler implements Runnable {
 
     // Write out the request header lines to the console
     private void dumpRequest(String firstLine, List<String> headers) {
+        
         System.out.println(firstLine);
         for (String headerLine : headers) {
             System.out.println(headerLine);
@@ -131,7 +146,7 @@ class ClientHandler implements Runnable {
 
     private int processGET(String resource, List<String> headers, DataOutputStream out) {
         try {
-
+        	//System.out.println("get2");
             // Default to index.html
             if (resource.endsWith("/")) {
                 resource += "index.html";
@@ -140,6 +155,7 @@ class ClientHandler implements Runnable {
             // Create file path from requested resource compatable with the host OS
             String path = ("." + resource).replace('/', File.separatorChar);
             int length = (int) new File(path).length();
+            String extension = path.substring(path.lastIndexOf("."));
             byte[] b = new byte[length];
 
             // Read the requested resource into an array of bytes
@@ -149,6 +165,10 @@ class ClientHandler implements Runnable {
                 resourceStream.read(b);
             } catch (IOException ex) {
                 out.writeBytes("HTTP/1.1 404 ERROR\n\n");
+                BufferedWriter writer = new BufferedWriter(new FileWriter("access.log",true));
+                writer.write("404\n");
+                 
+                writer.close();
                 return 404;
             }
 
@@ -157,6 +177,43 @@ class ClientHandler implements Runnable {
             
             // Write out the headers
             out.writeBytes("Content-Length:" + length + "\n");
+            //System.out.println(extension);
+            switch(extension){
+            case ".gif":
+            	out.writeBytes("Content-Type: image/gif\n");
+            	break;
+            case ".jpg":
+            	out.writeBytes("Content-Type: image/jpg\n");
+            	break;
+            case ".png":
+            	out.writeBytes("Content-Type: image/png\n");
+            	break;
+            case ".pdf":
+            	out.writeBytes("Content-Type: application/pdf\n");
+            	break;
+            case ".xls":
+            	out.writeBytes("Content-Type: application/vnd.ms-excel\n");
+            	break;
+            case ".xlsx":
+            	out.writeBytes("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\n");
+            	break;
+            case ".htm":
+            	out.writeBytes("Content-Type: text/htm\n");
+            	break;
+            case ".html":
+            	out.writeBytes("Content-Type: text/html\n");
+            	break;
+            }
+            
+            //out.writeBytes(new File(path).lastModified());
+            //System.out.println(new File(path).lastModified());
+            
+            SimpleDateFormat sdf = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+            sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+            File file = new File(path);
+            
+        	out.writeBytes("Last-Modified: " + sdf.format(file.lastModified())+"\n");
+            
             out.writeBytes("Connection: close\n");
             
             // Blank line ends the header section
@@ -166,10 +223,26 @@ class ClientHandler implements Runnable {
             out.write(b, 0, length);
             
             // Return code 200 means "Successful"
+            /*String str = "\"GET "+resource+" HTTP/1.1\"\n";
+            BufferedWriter writer = new BufferedWriter(new FileWriter("log.txt",true));
+            writer.write(str);
+             
+            writer.close();*/
+            BufferedWriter writer = new BufferedWriter(new FileWriter("access.log",true));
+            writer.write("200\n");
+             
+            writer.close();
+            
+            
+            
             return 200;
         } catch (IOException ex) {
             try {
                 out.writeBytes("HTTP/1.1 500 ERROR\n\n");
+                BufferedWriter writer = new BufferedWriter(new FileWriter("access.log",true));
+                writer.write("500\n");
+                 
+                writer.close();
                 return 500;
             } catch (IOException ex1) {
                 System.out.println("Internal error: " + ex1.getMessage());

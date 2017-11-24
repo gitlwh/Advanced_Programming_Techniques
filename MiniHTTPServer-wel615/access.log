@@ -1,0 +1,6 @@
+0:0:0:0:0:0:0:1 - "GET / HTTP/1.1" 200
+0:0:0:0:0:0:0:1 - "GET /favicon.ico HTTP/1.1" 404
+0:0:0:0:0:0:0:1 - "GET /mywebapp/ HTTP/1.1" 200
+0:0:0:0:0:0:0:1 - "GET /mywebapp/images/lulogo.gif HTTP/1.1" 200
+0:0:0:0:0:0:0:1 - "GET /mywebapp/ComputerEnvironment.pdf HTTP/1.1" 200
+0:0:0:0:0:0:0:1 - "GET /mywebapp/testexcel.xlsx HTTP/1.1" 200
