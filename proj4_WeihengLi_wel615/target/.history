@@ -1,0 +1,7 @@
+run
+exit
+run
+        val mappy2 = ListMap(mappy.toSeq.sortWith(_._2 > _._2):_*)
+run
+exit
+run
